@@ -1,9 +1,7 @@
-import { assertNotStrictEquals } from "@std/assert/not-strict-equals";
-import { assertStrictEquals } from "@std/assert/strict-equals";
-import { assertEquals } from "@std/assert/equals";
+import { expect, test } from "vite-plus/test";
 import { Factory, inject } from "./mod.ts";
 
-Deno.test(`should return a expected value`, () => {
+test("should return a expected value", () => {
   const DI = new Factory();
 
   DI.inject({
@@ -11,10 +9,10 @@ Deno.test(`should return a expected value`, () => {
     value: "world",
   });
 
-  assertEquals(DI.get("hello"), "world");
+  expect(DI.get("hello")).toBe("world");
 });
 
-Deno.test("should return valid class instance", () => {
+test("should return valid class instance", () => {
   class Hello {
     say() {
       return "world";
@@ -25,10 +23,10 @@ Deno.test("should return valid class instance", () => {
     class: Hello,
   });
 
-  assertEquals(DI.get(Hello).say(), "world");
+  expect(DI.get(Hello).say()).toBe("world");
 });
 
-Deno.test("should return singleton class instance", () => {
+test("should return singleton class instance", () => {
   class Hello {
     say() {
       return "world";
@@ -42,13 +40,13 @@ Deno.test("should return singleton class instance", () => {
   const a = DI.get(Hello);
   const b = DI.get(Hello);
 
-  assertStrictEquals(a, b);
+  expect(a).toBe(b);
 
-  assertEquals(a.say(), "world");
-  assertEquals(b.say(), "world");
+  expect(a.say()).toBe("world");
+  expect(b.say()).toBe("world");
 });
 
-Deno.test("should return own class instance", () => {
+test("should return own class instance", () => {
   class Hello {
     say() {
       return "world";
@@ -63,13 +61,13 @@ Deno.test("should return own class instance", () => {
   const a = DI.get(Hello);
   const b = DI.get(Hello);
 
-  assertNotStrictEquals(a, b);
+  expect(a).not.toBe(b);
 
-  assertEquals(a.say(), "world");
-  assertEquals(b.say(), "world");
+  expect(a.say()).toBe("world");
+  expect(b.say()).toBe("world");
 });
 
-Deno.test("should return valid class instance with deps", () => {
+test("should return valid class instance with deps", () => {
   const DI = new Factory();
   DI.inject({ token: "value", value: "univers" });
 
@@ -85,10 +83,10 @@ Deno.test("should return valid class instance with deps", () => {
     dependencies: ["value"],
   });
 
-  assertEquals(DI.get(Hello2).say(), "univers");
+  expect(DI.get(Hello2).say()).toBe("univers");
 });
 
-Deno.test("should return valid class instance with nested deps", () => {
+test("should return valid class instance with nested deps", () => {
   const DI = new Factory();
   DI.inject({
     token: "newValue",
@@ -114,10 +112,10 @@ Deno.test("should return valid class instance with nested deps", () => {
     dependencies: [HelloService],
   });
 
-  assertEquals(DI.get(Hello3).say(), "galaxy");
+  expect(DI.get(Hello3).say()).toBe("galaxy");
 });
 
-Deno.test("should return function result based on deps", () => {
+test("should return function result based on deps", () => {
   const DI = new Factory();
   DI.inject({
     token: "hey",
@@ -130,20 +128,34 @@ Deno.test("should return function result based on deps", () => {
 
   DI.inject({ function: say, dependencies: ["hey"] });
 
-  assertEquals(DI.get(say), "ho");
+  expect(DI.get(say)).toBe("ho");
 });
 
-Deno.test("should return decorated class with deps", () => {
-  @inject()
+/**
+ * The Node test runtime cannot parse TC39 decorator syntax and oxc only
+ * lowers legacy decorators, so the decorator is applied the way a class
+ * definition would perform it: the decorator is invoked with an engine-side
+ * context, and the context metadata is mirrored onto the class through
+ * `Symbol.metadata` exactly as the decorator metadata proposal prescribes.
+ */
+function applyInject(
+  target: abstract new (...args: never[]) => object,
+  name: string,
+  options?: { deps?: unknown[] },
+): void {
+  const metadata: Record<PropertyKey, unknown> = {};
+  inject(options)(target, { kind: "class", name, metadata, addInitializer: () => {} });
+  Object.defineProperty(target, Symbol.metadata, { value: metadata });
+}
+
+test("should return decorated class with deps", () => {
   class B {
     prefix(v: string): string {
       return `B: ${v}`;
     }
   }
+  applyInject(B, "B");
 
-  @inject({
-    deps: [B, "PREFIX"],
-  })
   class A {
     constructor(
       private prefixer: B,
@@ -154,6 +166,9 @@ Deno.test("should return decorated class with deps", () => {
       return this.prefixer.prefix(`${this.prefixValue} ${v}`);
     }
   }
+  applyInject(A, "A", {
+    deps: [B, "PREFIX"],
+  });
 
   const DI = new Factory();
 
@@ -162,6 +177,6 @@ Deno.test("should return decorated class with deps", () => {
     value: "prefixed value:",
   });
 
-  assertEquals(DI.get(B).prefix("works"), "B: works");
-  assertEquals(DI.get(A).prefix("works"), "B: prefixed value: works");
+  expect(DI.get(B).prefix("works")).toBe("B: works");
+  expect(DI.get(A).prefix("works")).toBe("B: prefixed value: works");
 });

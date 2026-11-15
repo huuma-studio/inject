@@ -74,18 +74,17 @@ export interface FunctionToInject<T> {
  * Allowed input types for the {@link Factory.inject} function
  *  Types: {@link ClassToInject},{@link ValueToInject},{@link FunctionToInject}
  */
-export type ToInject<T> =
-  | ClassToInject<T>
-  | FunctionToInject<T>
-  | ValueToInject<T>;
+export type ToInject<T> = ClassToInject<T> | FunctionToInject<T> | ValueToInject<T>;
 
 type ReturnValue<A extends Injectable, T> = A extends string
   ? ValueToInject<T>["value"]
-  // deno-lint-ignore no-explicit-any
-  : A extends (...args: any) => any ? ReturnType<A>
-  // deno-lint-ignore no-explicit-any
-  : A extends new (...args: any[]) => infer R ? R
-  : never;
+  : // deno-lint-ignore no-explicit-any
+    A extends (...args: any) => any
+    ? ReturnType<A>
+    : // deno-lint-ignore no-explicit-any
+      A extends new (...args: any[]) => infer R
+      ? R
+      : never;
 
 /**
  * Factory to manage the dependency injection tasks
@@ -105,8 +104,7 @@ export class Factory {
       return item.type === token;
     });
 
-    const errMsg =
-      `Provided token: "${token.toString()}" is not registered for dependency injection`;
+    const errMsg = `Provided token: "${token.toString()}" is not registered for dependency injection`;
 
     if (!injectable) {
       if (
@@ -115,10 +113,8 @@ export class Factory {
         token[Symbol.metadata] &&
         Array.isArray(token[Symbol.metadata]![INJECT_METADATA_KEY])
       ) {
-        const dependencies = <Injectable[]> (
-          token[Symbol.metadata]![INJECT_METADATA_KEY]
-        );
-        this.inject({ class: <Newable<unknown>> token, dependencies });
+        const dependencies = <Injectable[]>token[Symbol.metadata]![INJECT_METADATA_KEY];
+        this.inject({ class: <Newable<unknown>>token, dependencies });
       }
       injectable = this.#registry.find((item) => {
         return item.type === token;
@@ -131,13 +127,11 @@ export class Factory {
     if ("class" in injectable) {
       if (injectable.isSingleton !== false) {
         const item = this.#singletons.get(injectable.type);
-        if (item) return <ReturnValue<A, T>> item;
+        if (item) return <ReturnValue<A, T>>item;
       }
-      const deps: unknown[] = injectable.dependencies?.map((toInject) =>
-        this.get(toInject)
-      ) ?? [];
+      const deps: unknown[] = injectable.dependencies?.map((toInject) => this.get(toInject)) ?? [];
 
-      const item = <ReturnValue<A, T>> new injectable.class(...deps);
+      const item = <ReturnValue<A, T>>new injectable.class(...deps);
 
       if (injectable.isSingleton !== false) {
         this.#singletons.set(injectable.type, item);
@@ -147,15 +141,16 @@ export class Factory {
     }
 
     if ("function" in injectable) {
-      const deps: unknown[] = injectable.dependencies?.map((toInject) => {
-        return this.get(toInject);
-      }) ?? [];
+      const deps: unknown[] =
+        injectable.dependencies?.map((toInject) => {
+          return this.get(toInject);
+        }) ?? [];
 
-      return <ReturnValue<A, T>> injectable.function(...deps);
+      return <ReturnValue<A, T>>injectable.function(...deps);
     }
 
     if ("token" in injectable) {
-      return <ReturnValue<A, T>> injectable.value;
+      return <ReturnValue<A, T>>injectable.value;
     }
 
     throw new Error(errMsg);
@@ -166,7 +161,7 @@ export class Factory {
    * @method
    * @param {ToInject}
    */
-  inject<T>(toInject: ToInject<T>) {
+  inject<T>(toInject: ToInject<T>): void {
     if ("class" in toInject) {
       this.#registry.push({
         type: toInject.class,
@@ -203,9 +198,7 @@ export function inject<T>(options?: {
 }): (target: T, context: ClassDecoratorContext) => T {
   return function (target: T, context: ClassDecoratorContext) {
     if (context.kind) {
-      context.metadata[INJECT_METADATA_KEY] = [
-        ...(options?.deps ? options.deps : []),
-      ];
+      context.metadata[INJECT_METADATA_KEY] = [...(options?.deps ? options.deps : [])];
     }
     return target;
   };

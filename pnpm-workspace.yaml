@@ -1,0 +1,5 @@
+# vite-plus pins its internals: vite resolves to the patched vite-plus core
+# and vitest is the version vite-plus 1.4.0 expects.
+overrides:
+  vite@*: npm:@voidzero-dev/vite-plus-core@1.4.0
+  vitest@*: 5.0.5

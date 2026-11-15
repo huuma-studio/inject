@@ -1,0 +1,13 @@
+{
+  "name": "@huuma/inject",
+  "version": "0.0.1",
+  "description": "A simple and lightweight dependency injection container for TypeScript: register plain values, wire classes with nested dependencies, and use decorators for automatic registration.",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/mod.ts"
+  },
+  "publish": {
+    "include": ["src", "README.md", "LICENSE"],
+    "exclude": ["**/*.test.ts"]
+  }
+}
