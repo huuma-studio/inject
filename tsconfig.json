@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    // Symbol.metadata (decorator metadata) is only typed in the esnext libs.
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "strict": true,
+    // JSR rejects slow types: exports need explicit types.
+    "declaration": true,
+    "isolatedDeclarations": true,
+    "types": ["node"],
+    "skipLibCheck": true
+  },
+  "include": ["src", "vite.config.ts"]
+}

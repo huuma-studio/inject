@@ -1,1 +1,28 @@
-.zed/*
+# Dependencies
+node_modules/
+
+# Build output
+.huumadist/
+.huuma/
+
+# Deno
+deno.lock
+
+# Editor
+.zed/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# graphify
+graphify-out/
